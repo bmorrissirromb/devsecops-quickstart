@@ -11,9 +11,6 @@ import aws_cdk.aws_ssm as ssm
 
 import logging
 
-from devsecops_quickstart.cloud9 import Cloud9Stack
-from devsecops_quickstart.sample_app.sample_app import SampleAppStage
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
