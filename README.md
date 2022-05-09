@@ -1,74 +1,58 @@
 
-## DevSecOps Quick Start
+## DevSecOps Security Review Pipeline
 
-This artefact helps development teams to quickly set up a ready to use environment integrated with a
-multi-account CI/CD pipeline following security and DevOps best practices. Upon successful deployment, you will have:
+This artifact helps development teams to quickly set up a ready-to-use environment integrated with a
+multi-account CI pipeline following security and DevOps best practices. Upon successful deployment, you will have:
 
-- an AWS CodeCommit Git repository 
+- an AWS CodeCommit Git repository (with a Future option to integrate an existing Gitlab repository)
 - an AWS Cloud9 development environment integrated with the code repository
-- a multi-stage, multi-account CI/CD pipeline integrated with the code repository  
+- a multi-stage, multi-account CI pipeline integrated with the code repository  
 - pipeline integration with [Bandit](https://github.com/PyCQA/bandit) for finding common security issues in Python code 
 - pipeline integration with [Snyk](https://snyk.io/) for continuously monitoring for vulnerabilities in your dependencies
 - pipeline integration with [CFN NAG](https://github.com/stelligent/cfn_nag) to look for patterns in 
   CloudFormation templates that may indicate insecure infrastructure
 - pipeline integration with [Open Policy Agent (OPA)](https://www.openpolicyagent.org/) that enables you define and
-  enforce policies on infrastructure resources at development time   
+  enforce policies on infrastructure resources at development time
+- (Future) pipeline integration with cfn-policy-validator, a tool that dynamically checks for security issues in CloudFormation policies
+- (Future) A configuration file that allows for customization of how the tools should execute
+- (Future) An output summary of the tools executed by the pipeline.
+- (Future) pipeline integration to ensure that a valid LICENSE file is present in your repository.
 
 ![validate](./assets/validate.png)
 ![cloud9](./assets/cloud9.png)
 ![dev](./assets/dev.png)
 ![qa](./assets/qa.png)
 ![prod](./assets/prod.png)
-### Set Up
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+### Install
 
-To manually create a virtualenv on MacOS and Linux:
-
+Clone this repository using:
 ```
-$ python3 -m venv .venv
+git clone <Repo URL here>
 ```
 
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
+Create and activate your Python virtual environment, then install the dependencies.
 
 ```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
-```
-
-Once the virtualenv is activated, you can install the required dependencies.
-
-```
-$ pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+# TODO - Update `cdk.json` with account number and region values to be used for golden pipeline deployment.
 ```
 
 ### Bootstrap
 
-Update `cdk.json` with account number and region values to be used for toolchain, Dev, QA, and Prod deployments.
-The toolchain account will host all the required tools deployed by this quick start. The Dev/QA/Prod accounts will 
-be used as target accounts for deployment of your application(s).
+Bootstrap the golden pipeline account.
 
-Bootstrap the toolchain account. You only need to do this one time per environment where you want 
-to deploy CDK applications.
-
-Make sure you have credentials for the toolchain account in a profile named `toolchain-profile`.
+Make sure you have credentials for the toolchain account in a profile named `golden-pipeline-profile`.
 
 ```
-$ cdk bootstrap \
-  --profile toolchain-profile \
+AWS_REGION=$(aws configure get region)
+AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+cdk bootstrap \
+  --profile golden-pipeline-profile \
   --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess \
-  aws://<toolchain-account>/<toolchain-region>
+  aws://$AWS_ACCOUNT/$AWS_REGION
 ```
 
 Bootstrap the target accounts. You only need to do this one time per environment where you want
@@ -132,7 +116,7 @@ $ git commit -m "initial commit"
 $ git push --set-upstream origin development
 ```
 
-#### CI/CD Pipeline - Production
+#### CI/ Pipeline - Production
 Run the following command to deploy the production CI/CD pipeline. The production pipeline will track changes from
 `production_branch` and deploys to QA and Prod account as configured in `cdk.json`.
 
