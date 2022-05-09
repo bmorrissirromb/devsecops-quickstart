@@ -18,13 +18,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-class ToolingStage(cdk.Stage):
-    def __init__(self, scope: cdk.Construct, general_config: dict, **kwargs):
-        super().__init__(scope, id="tooling", **kwargs)
-
-        Cloud9Stack(self, general_config=general_config, **kwargs)
-
-
 class CICDPipelineStack(cdk.Stack):
     def __init__(
         self,
@@ -213,36 +206,6 @@ class CICDPipelineStack(cdk.Stack):
                 user_parameters_string="**/*.template.json",
             ),
         )
-
-        if is_development_pipeline:
-            pipeline.add_application_stage(
-                app_stage=ToolingStage(
-                    self,
-                    general_config=general_config,
-                    env=cdk.Environment(
-                        account=general_config["toolchain_account"],
-                        region=general_config["toolchain_region"],
-                    ),
-                ),
-            )
-
-        for stage_config_item in stages_config.items():
-            stage = stage_config_item[0]
-            stage_config = stage_config_item[1]
-
-            pipeline.add_application_stage(
-                manual_approvals=stage_config["manual_approvals"],
-                app_stage=SampleAppStage(
-                    self,
-                    stage=stage,
-                    general_config=general_config,
-                    stage_config=stage_config,
-                    env=cdk.Environment(
-                        account=stage_config["stage_account"],
-                        region=stage_config["stage_region"],
-                    ),
-                ),
-            )
 
         cdk.CfnOutput(self, "pipeline-artifact-bucket", value=pipeline.code_pipeline.artifact_bucket.bucket_name)
         pipeline.code_pipeline.artifact_bucket.encryption_key.node.default_child.cfn_options.metadata = {
