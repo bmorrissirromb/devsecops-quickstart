@@ -1,5 +1,5 @@
 
-## DevSecOps Security Review Pipeline
+## DevSecOps Golden Pipeline
 
 This artifact sets up a ready-to-use development environment integrated with a CI pipeline with security and DevOps best practices. Upon successful deployment, you will have:
 
