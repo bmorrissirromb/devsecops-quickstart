@@ -1,3 +1,4 @@
+import os
 import aws_cdk.aws_codebuild as codebuild
 import aws_cdk.core as cdk
 import aws_cdk.aws_codepipeline as codepipeline
@@ -21,12 +22,16 @@ class CICDPipelineStack(cdk.Stack):
         scope: cdk.Construct,
         id: str,
         general_config: dict,
-        stages_config: dict,
         is_development_pipeline: bool,
+        opa_scan_rules_bucket_name: str,
+        opa_scan_lambda_arn: str,
+        opa_scan_role_arn: str,
+        cfn_nag_lambda_arn: str,
+        cfn_nag_role_arn: str,
         **kwargs,
     ) -> None:
         super().__init__(scope, id, stack_name=id, **kwargs)
-
+        region = os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
         if is_development_pipeline:
             repository = codecommit.Repository(self, "Repository", repository_name=general_config["repository_name"])
         else:
@@ -133,7 +138,7 @@ class CICDPipelineStack(cdk.Stack):
                                     "SNYK_TOKEN=$(aws secretsmanager get-secret-value "
                                     "--query SecretString --output text "
                                     f"--secret-id {general_config['secret_name']['snyk']} "
-                                    f"--region {general_config['toolchain_region']})"
+                                    f"--region {region}"
                                 ),
                                 "snyk test",
                                 "snyk monitor",
@@ -144,16 +149,6 @@ class CICDPipelineStack(cdk.Stack):
             ),
         )
 
-        opa_scan_params = general_config["parameter_name"]["opa_scan"]
-        opa_scan_rules_bucket_name = ssm.StringParameter.value_from_lookup(
-            self, parameter_name=opa_scan_params["rules_bucket"]
-        )
-        opa_scan_lambda_arn = ssm.StringParameter.value_from_lookup(self, parameter_name=opa_scan_params["lambda_arn"])
-        opa_scan_role_arn = ssm.StringParameter.value_from_lookup(self, parameter_name=opa_scan_params["role_arn"])
-
-        cfn_nag_params = general_config["parameter_name"]["cfn_nag"]
-        cfn_nag_lambda_arn = ssm.StringParameter.value_from_lookup(self, parameter_name=cfn_nag_params["lambda_arn"])
-        cfn_nag_role_arn = ssm.StringParameter.value_from_lookup(self, parameter_name=cfn_nag_params["role_arn"])
 
         pipeline.code_pipeline.artifact_bucket.add_to_resource_policy(
             iam.PolicyStatement(

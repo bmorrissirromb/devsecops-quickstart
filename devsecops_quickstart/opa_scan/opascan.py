@@ -98,25 +98,6 @@ class OPAScanStack(cdk.Stack):
             memory_size=256,
             runtime=lambda_.Runtime.GO_1_X,
         )
-
-        opa_scan_params = general_config["parameter_name"]["opa_scan"]
-        ssm.StringParameter(
-            self,
-            "rules-bucket-url-ssm-param",
-            parameter_name=opa_scan_params["rules_bucket"],
-            string_value=rules_bucket.bucket_name,
-        )
-
-        ssm.StringParameter(
-            self,
-            "lambda-arn-ssm-param",
-            parameter_name=opa_scan_params["lambda_arn"],
-            string_value=handler.function_arn,
-        )
-
-        ssm.StringParameter(
-            self,
-            "role-arn-ssm-param",
-            parameter_name=opa_scan_params["role_arn"],
-            string_value=lambda_role.role_arn,
-        )
+        self.opa_rules_bucket_url = rules_bucket.bucket_name
+        self.opa_lambda_arn = handler.function_arn
+        self.opa_role_arn = lambda_role.role_arn

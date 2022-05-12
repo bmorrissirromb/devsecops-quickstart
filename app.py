@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 from aws_cdk import core as cdk
 
 from devsecops_quickstart.opa_scan.opascan import OPAScanStack
@@ -14,8 +15,8 @@ opa_scan = OPAScanStack(
     id=f"{general_config['repository_name']}-opa-scan",
     general_config=general_config,
     env=cdk.Environment(
-        account=general_config["toolchain_account"],
-        region=general_config["toolchain_region"],
+        account=os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"]),
+        region=os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
     ),
 )
 
@@ -24,32 +25,24 @@ cfn_nag = CfnNag(
     id=f"{general_config['repository_name']}-cfn-nag",
     general_config=general_config,
     env=cdk.Environment(
-        account=general_config["toolchain_account"],
-        region=general_config["toolchain_region"],
+        account=os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"]),
+        region=os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
     ),
 )
 
 developmentPipeline = CICDPipelineStack(
     app,
-    id=f"{general_config['repository_name']}-cicd-development",
+    id=f"{general_config['repository_name']}-ci-development",
     general_config=general_config,
-    stages_config=dict(filter(lambda item: item[0] == "dev", config["stage"].items())),
     is_development_pipeline=True,
+    opa_scan_rules_bucket_name=opa_scan.opa_rules_bucket_url,
+    opa_scan_lambda_arn=opa_scan.opa_lambda_arn,
+    opa_scan_role_arn=opa_scan.opa_role_arn,
+    cfn_nag_lambda_arn = cfn_nag.cfn_nag_lambda_arn,
+    cfn_nag_role_arn = cfn_nag.cfn_nag_role_arn,
     env=cdk.Environment(
-        account=general_config["toolchain_account"],
-        region=general_config["toolchain_region"],
-    ),
-)
-
-productionPipeline = CICDPipelineStack(
-    app,
-    id=f"{general_config['repository_name']}-cicd-production",
-    general_config=general_config,
-    stages_config=dict(filter(lambda item: item[0] in ["qa", "prod"], config["stage"].items())),
-    is_development_pipeline=False,
-    env=cdk.Environment(
-        account=general_config["toolchain_account"],
-        region=general_config["toolchain_region"],
+        account=os.environ.get("CDK_DEPLOY_ACCOUNT", os.environ["CDK_DEFAULT_ACCOUNT"]),
+        region=os.environ.get("CDK_DEPLOY_REGION", os.environ["CDK_DEFAULT_REGION"])
     ),
 )
 

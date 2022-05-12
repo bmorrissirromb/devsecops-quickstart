@@ -109,16 +109,5 @@ class CfnNag(cdk.Stack):
             string_value=rules_bucket.bucket_name,
         )
 
-        ssm.StringParameter(
-            self,
-            "lambda-arn-ssm-param",
-            parameter_name=cfn_nag_params["lambda_arn"],
-            string_value=handler.function_arn,
-        )
-
-        ssm.StringParameter(
-            self,
-            "role-arn-ssm-param",
-            parameter_name=cfn_nag_params["role_arn"],
-            string_value=lambda_role.role_arn,
-        )
+        self.cfn_nag_lambda_arn = handler.function_arn
+        self.cfn_nag_role_arn = lambda_role.role_arn
